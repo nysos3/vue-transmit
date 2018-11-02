@@ -112,6 +112,11 @@ export type XHRDriverOptions<T = any> = {
 	errUploadError?: (xhr: XMLHttpRequest) => string;
 	errUploadTimeout?: (xhr: XMLHttpRequest) => string;
 	renameFile?: (name: string) => string;
+	/**
+	 * Setting the toS3 parameter to true will strip the Form fields from the
+	 * request so that files uploaded to AWS S3 are uploaded untouched.
+	 */
+	toS3?: StaticOrDynamic<boolean>;
 };
 
 export type XHRUploadGroup = {
@@ -137,6 +142,7 @@ export class XHRDriver<T = any> implements DriverInterface {
 	public errUploadTimeout: (xhr: XMLHttpRequest) => string;
 	public renameFile: (name: string) => string;
 	public responseParseFunc?: (xhr: XMLHttpRequest) => T;
+	public toS3: StaticOrDynamic<boolean>;
 
 	private uploadGroups: { [key: number]: XHRUploadGroup } = Object.create(
 		null
@@ -163,6 +169,7 @@ export class XHRDriver<T = any> implements DriverInterface {
 			errUploadTimeout = (_xhr: XMLHttpRequest) =>
 				`Error during upload: the server timed out.`,
 			renameFile = (name: string) => name,
+			toS3 = false,
 		} = options;
 
 		if (!url) {
@@ -187,6 +194,7 @@ export class XHRDriver<T = any> implements DriverInterface {
 		this.errUploadError = errUploadError;
 		this.errUploadTimeout = errUploadTimeout;
 		this.renameFile = renameFile;
+		this.toS3 = toS3;
 	}
 
 	uploadFiles(files: VTransmitFile[]): Promise<UploadResult<T>> {
@@ -319,6 +327,18 @@ export class XHRDriver<T = any> implements DriverInterface {
 			const formData = new FormData();
 			for (const key of Object.keys(params)) {
 				formData.append(key, params[key]);
+			}
+
+
+			if (this.context.props.uploadMultiple && this.toS3) {
+				throw new TypeError(
+					`XHRDriver: Can not upload multiple with toS3 enabled.`
+				);
+			}
+
+			if(this.toS3) {
+				this.context.emit(VTransmitEvents.Sending, files[0], xhr, formData);
+				return xhr.send(files[0].nativeFile)
 			}
 
 			for (const file of files) {

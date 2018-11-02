@@ -215,6 +215,7 @@ vue-transmit
 | resize                 | function              | `(file: VTransmitFile, dims: { width: number; height: number; }) => { sx: number; sy: number; sWidth: number; sHeight: number; dx: number; dy: number; dWidth: number; dHeight: number; }` |
 | adapterOptions         | object                | `{}`                                                                                                                                                                                       |
 | uploadAdapter          | function              | `XHRUploadAdapter`                                                                                                                                                                         |
+| toS3                   | boolean               | `false`                                                                                                                                                                                    |
 
 ## Adapter Options: XHRUploadAdapter
 
